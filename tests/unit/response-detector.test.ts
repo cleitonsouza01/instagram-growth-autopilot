@@ -5,7 +5,7 @@ import {
   ActionBlockError,
   NotAuthenticatedError,
   CheckpointRequiredError,
-  InstagramApiError,
+  PlatformApiError,
 } from "../../api/errors";
 
 describe("detectResponseError", () => {
@@ -41,7 +41,7 @@ describe("detectResponseError", () => {
       detectResponseError({
         body: {
           message: "checkpoint_required",
-          checkpoint_url: "https://www.instagram.com/challenge/123/",
+          checkpoint_url: "https://www.platform.com/challenge/123/",
         },
         status: 400,
       });
@@ -49,7 +49,7 @@ describe("detectResponseError", () => {
     } catch (err) {
       expect(err).toBeInstanceOf(CheckpointRequiredError);
       expect((err as CheckpointRequiredError).checkpointUrl).toBe(
-        "https://www.instagram.com/challenge/123/",
+        "https://www.platform.com/challenge/123/",
       );
     }
   });
@@ -63,18 +63,18 @@ describe("detectResponseError", () => {
     ).toThrow(NotAuthenticatedError);
   });
 
-  it("throws InstagramApiError for generic 400 with fail status", () => {
+  it("throws PlatformApiError for generic 400 with fail status", () => {
     expect(() =>
       detectResponseError({
         body: { status: "fail", message: "Something went wrong" },
         status: 400,
       }),
-    ).toThrow(InstagramApiError);
+    ).toThrow(PlatformApiError);
   });
 
-  it("throws InstagramApiError for non-JSON error responses", () => {
+  it("throws PlatformApiError for non-JSON error responses", () => {
     expect(() =>
       detectResponseError({ body: null, status: 500 }),
-    ).toThrow(InstagramApiError);
+    ).toThrow(PlatformApiError);
   });
 });

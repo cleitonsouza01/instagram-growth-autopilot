@@ -7,7 +7,7 @@
 
 - Schedule posts for future publishing at optimal times
 - Create reusable DM templates for quick responses
-- Download Instagram content (posts, stories, reels)
+- Download Platform content (posts, stories, reels)
 - Export follower lists to CSV
 - Anonymous story viewing
 
@@ -63,7 +63,7 @@ in IndexedDB (Dexie supports both natively). Do NOT use base64 encoding — it a
 **Template system:**
 - Store reusable message templates
 - Variable substitution: `{username}`, `{fullname}`
-- Quick-insert button in Instagram DM interface (content script injection)
+- Quick-insert button in Platform DM interface (content script injection)
 - Template categories (welcome, collaboration, FAQ)
 
 ```typescript
@@ -103,7 +103,7 @@ export async function downloadProfilePic(username: string): Promise<Blob>;
 export async function downloadCarousel(mediaId: string): Promise<Blob[]>;
 ```
 
-**Implementation:** Extract media URLs from Instagram's API responses and fetch the binary content. Stories and reels use CDN URLs that expire — download must happen immediately.
+**Implementation:** Extract media URLs from Platform's API responses and fetch the binary content. Stories and reels use CDN URLs that expire — download must happen immediately.
 
 ### 8.4 Follower Export
 
@@ -143,7 +143,7 @@ export async function exportFollowers(
 
 **Mechanism:**
 - Intercept the "story seen" API call (`/api/v1/media/seen/`)
-- Block the request before it reaches Instagram's servers
+- Block the request before it reaches Platform's servers
 - User can toggle ghost mode on/off
 - Visual indicator when ghost mode is active
 
@@ -172,7 +172,7 @@ export async function isGhostModeEnabled(): Promise<boolean>;
 ```
 
 > **Note**: `declarativeNetRequestWithHostAccess` is required because the rules
-> target `instagram.com` specifically. Without it, the rules won't match
+> target `platform.com` specifically. Without it, the rules won't match
 > against the host_permissions domains.
 
 ### 8.6 UI Components
@@ -226,7 +226,7 @@ this.version(3).stores({
 - [ ] Scheduled posts publish automatically via chrome.alarms
 - [ ] Calendar view shows all scheduled content
 - [ ] DM templates support variable substitution
-- [ ] DM template quick-insert works in Instagram DM interface
+- [ ] DM template quick-insert works in Platform DM interface
 - [ ] Content download works for photos, carousels, stories, reels
 - [ ] Follower export generates valid CSV with all fields
 - [ ] Ghost mode blocks story "seen" reporting

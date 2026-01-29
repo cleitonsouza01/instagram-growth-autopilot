@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { filterProspect, type FilterConfig } from "../../lib/prospect-filter";
+import { filterProspect } from "../../lib/prospect-filter";
 import type { Prospect, ActionLog } from "../../storage/database";
 
 function makeProspect(overrides: Partial<Prospect> = {}): Prospect {
   return {
     id: 1,
-    igUserId: "12345",
+    platformUserId: "12345",
     username: "testuser",
     fullName: "Test User",
     profilePicUrl: "https://example.com/pic.jpg",

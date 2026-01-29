@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { withRetry } from "../../api/retry";
 import {
-  InstagramApiError,
+  PlatformApiError,
   ActionBlockError,
   NotAuthenticatedError,
   RateLimitError,
@@ -29,8 +29,8 @@ describe("withRetry", () => {
   it("retries on server error", async () => {
     const fn = vi
       .fn()
-      .mockRejectedValueOnce(new InstagramApiError("Server error", 500))
-      .mockRejectedValueOnce(new InstagramApiError("Server error", 502))
+      .mockRejectedValueOnce(new PlatformApiError("Server error", 500))
+      .mockRejectedValueOnce(new PlatformApiError("Server error", 502))
       .mockResolvedValue("ok");
 
     const result = await withRetry(fn, { maxRetries: 3, baseDelayMs: 1 });
@@ -41,7 +41,7 @@ describe("withRetry", () => {
   it("throws after exhausting retries", async () => {
     const fn = vi
       .fn()
-      .mockRejectedValue(new InstagramApiError("Server error", 500));
+      .mockRejectedValue(new PlatformApiError("Server error", 500));
 
     await expect(
       withRetry(fn, { maxRetries: 2, baseDelayMs: 1 }),
@@ -70,7 +70,7 @@ describe("withRetry", () => {
   it("does not retry non-retryable status codes", async () => {
     const fn = vi
       .fn()
-      .mockRejectedValue(new InstagramApiError("Bad request", 400));
+      .mockRejectedValue(new PlatformApiError("Bad request", 400));
 
     await expect(
       withRetry(fn, { maxRetries: 3, baseDelayMs: 1 }),

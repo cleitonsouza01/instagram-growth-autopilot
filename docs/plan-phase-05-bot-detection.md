@@ -107,7 +107,7 @@ export function analyzeRatios(profile: UserProfile): {
 2. Score each follower with bot detection
 3. Store results in IndexedDB
 4. Present summary: total followers, bot count, bot percentage
-5. Option to block detected bots (via Instagram API)
+5. Option to block detected bots (via Platform API)
 
 ```typescript
 export interface ScanResult {

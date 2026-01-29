@@ -35,6 +35,14 @@ export const defaultEndpoints: Record<string, EndpointEntry> = {
     url: "/api/v1/friendships/show/{userId}/",
     method: "GET",
   },
+  followUser: {
+    url: "/api/v1/friendships/create/{userId}/",
+    method: "POST",
+  },
+  unfollowUser: {
+    url: "/api/v1/friendships/destroy/{userId}/",
+    method: "POST",
+  },
   userFeed: {
     url: "/api/v1/feed/user/{userId}/",
     method: "GET",
@@ -46,6 +54,36 @@ export const defaultEndpoints: Record<string, EndpointEntry> = {
   unlikeMedia: {
     url: "/api/v1/web/likes/{mediaId}/unlike/",
     method: "POST",
+  },
+  // Upload & publishing
+  uploadPhoto: {
+    url: "/rupload_igphoto/",
+    method: "POST",
+  },
+  configurePost: {
+    url: "/api/v1/media/configure/",
+    method: "POST",
+  },
+  configureStory: {
+    url: "/api/v1/media/configure_to_story/",
+    method: "POST",
+  },
+  configureCarousel: {
+    url: "/api/v1/media/configure_sidecar/",
+    method: "POST",
+  },
+  // Location & hashtags
+  locationSearch: {
+    url: "/api/v1/location_search/",
+    method: "GET",
+  },
+  hashtagSearch: {
+    url: "/api/v1/tags/search/",
+    method: "GET",
+  },
+  hashtagInfo: {
+    url: "/api/v1/tags/{name}/info/",
+    method: "GET",
   },
 };
 

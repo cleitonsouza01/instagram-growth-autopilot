@@ -39,6 +39,12 @@ export async function harvestCompetitorFollowers(
     ...config,
   };
 
+  logger.info("harvester", "Starting harvest", {
+    competitors: cfg.competitors,
+    maxPagesPerSession: cfg.maxPagesPerSession,
+    cursors,
+  });
+
   const results: HarvestResult[] = [];
   const competitorCursors = { ...cursors };
   const competitorProspectCounts: Record<string, number> = {};
@@ -106,22 +112,38 @@ export async function harvestCompetitorFollowers(
           await delay(cfg.pageFetchDelayMs);
         }
       } catch (err) {
-        logger.error(
-          "harvester",
-          `Error harvesting ${competitor}`,
-          err instanceof Error ? err.message : String(err),
-        );
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        const errorStack = err instanceof Error ? err.stack : undefined;
+        logger.error("harvester", `Error harvesting ${competitor}`, {
+          error: errorMsg,
+          stack: errorStack,
+        });
         // Mark this competitor as done to avoid retrying in this session
         competitorCursors[competitor] = "";
       }
     }
 
     // If no competitor made progress, stop
-    if (!anyProgress) break;
+    if (!anyProgress) {
+      logger.info("harvester", "No progress made in round, stopping harvest");
+      break;
+    }
 
     // Check total pages limit
-    if (totalPages >= cfg.maxPagesPerSession) break;
+    if (totalPages >= cfg.maxPagesPerSession) {
+      logger.info("harvester", "Max pages reached, stopping harvest");
+      break;
+    }
   }
+
+  logger.info("harvester", "Harvest complete", {
+    totalPages,
+    results: results.map(r => ({
+      competitor: r.competitorUsername,
+      new: r.newProspects,
+      dupes: r.duplicatesSkipped,
+    })),
+  });
 
   return results;
 }
@@ -158,7 +180,7 @@ async function harvestOnePage(
   for (const follower of page.items) {
     // Check for duplicates
     const existing = await db.prospects
-      .where("igUserId")
+      .where("platformUserId")
       .equals(follower.pk)
       .first();
 
@@ -169,7 +191,7 @@ async function harvestOnePage(
 
     // Create new prospect
     const prospect: Omit<Prospect, "id"> = {
-      igUserId: follower.pk,
+      platformUserId: follower.pk,
       username: follower.username,
       fullName: follower.full_name,
       profilePicUrl: follower.profile_pic_url,

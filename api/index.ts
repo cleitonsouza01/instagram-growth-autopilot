@@ -1,5 +1,5 @@
 // Core
-export { igFetch } from "./client";
+export { platformFetch } from "./client";
 export { getCsrfToken, isLoggedIn } from "./csrf";
 export { withRetry } from "./retry";
 export { getEndpoint, updateEndpoint, resolveUrl, defaultEndpoints } from "./endpoint-registry";
@@ -7,7 +7,7 @@ export { detectResponseError } from "./response-detector";
 
 // Error types
 export {
-  InstagramApiError,
+  PlatformApiError,
   RateLimitError,
   ActionBlockError,
   NotAuthenticatedError,
@@ -16,5 +16,14 @@ export {
 
 // Endpoints
 export { getUserByUsername, getUserById, searchUsers } from "./endpoints/user";
-export { getFollowers, getFollowing, getFriendshipStatus } from "./endpoints/followers";
+export { getFollowers, getFollowing, getFriendshipStatus, followUser, unfollowUser } from "./endpoints/followers";
 export { getUserFeed, likeMedia, unlikeMedia } from "./endpoints/media";
+export {
+  requestPhotoUploadUrl,
+  uploadPhotoData,
+  configurePhotoPost,
+  configureStory,
+  configureCarousel,
+} from "./endpoints/upload";
+export { searchLocations } from "./endpoints/location";
+export { searchHashtags, getHashtagInfo } from "./endpoints/hashtags";

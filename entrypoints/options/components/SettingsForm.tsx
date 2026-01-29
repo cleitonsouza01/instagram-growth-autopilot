@@ -7,7 +7,29 @@ interface SettingsFormProps {
 
 export default function SettingsForm({ settings, onSave }: SettingsFormProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Platform Configuration */}
+      <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <h3 className="text-sm font-semibold text-blue-800 mb-3">
+          Platform Configuration
+        </h3>
+        <label className="block">
+          <span className="text-sm font-medium text-gray-700">
+            Platform Base URL
+          </span>
+          <input
+            type="url"
+            value={settings.platformBaseUrl}
+            onChange={(e) => onSave({ platformBaseUrl: e.target.value })}
+            placeholder="https://www.instagram.com"
+            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            The base URL of the platform (e.g., https://www.instagram.com)
+          </p>
+        </label>
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <label className="block">
           <span className="text-sm font-medium text-gray-700">

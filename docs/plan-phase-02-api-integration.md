@@ -1,13 +1,13 @@
-# Phase 2: Instagram Request Layer
+# Phase 2: Platform Request Layer
 
 > Build a typed, rate-aware request layer that runs inside the content script
-> on `instagram.com`, making same-origin `fetch()` calls that piggyback on the
+> on `platform.com`, making same-origin `fetch()` calls that piggyback on the
 > user's existing logged-in session. No API keys, no OAuth, no official API.
 
 ## Objectives
 
 - Create a same-origin fetch wrapper running in the content script
-- Implement typed request/response contracts for all Instagram endpoints
+- Implement typed request/response contracts for all Platform endpoints
 - Build retry logic with exponential backoff
 - Handle CSRF token extraction from `document.cookie`
 - Detect action blocks and rate limits from responses
@@ -19,11 +19,11 @@
 ### 2.1 Request Client Core
 
 ```typescript
-// api/client.ts — runs inside the CONTENT SCRIPT on instagram.com
+// api/client.ts — runs inside the CONTENT SCRIPT on platform.com
 ```
 
 **How it works:**
-The content script is injected into `instagram.com`. When it calls `fetch()`,
+The content script is injected into `platform.com`. When it calls `fetch()`,
 the browser treats it as a same-origin request and automatically attaches all
 cookies — including the HttpOnly `sessionid`. We don't need to read or manage
 the session cookie ourselves. The only thing we extract manually is the
@@ -31,7 +31,7 @@ the session cookie ourselves. The only thing we extract manually is the
 
 **Responsibilities:**
 - Extract `csrftoken` from `document.cookie` (non-HttpOnly, readable in content script)
-- Set required headers: `X-CSRFToken`, `X-Instagram-AJAX`, `X-Requested-With`
+- Set required headers: `X-CSRFToken`, `X-Platform-AJAX`, `X-Requested-With`
 - Base `fetch` wrapper with automatic header injection
 - Response parsing with error classification
 - Retry with exponential backoff (1s → 2s → 4s → 8s, max 60s, max 3 retries)
@@ -40,22 +40,22 @@ the session cookie ourselves. The only thing we extract manually is the
 ```typescript
 const buildHeaders = (csrfToken: string): HeadersInit => ({
   "X-CSRFToken": csrfToken,
-  "X-Instagram-AJAX": "1",
+  "X-Platform-AJAX": "1",
   "X-Requested-With": "XMLHttpRequest",
   "Content-Type": "application/x-www-form-urlencoded",
 });
 // User-Agent, Referer, and cookies are handled automatically by the browser
-// because the fetch is same-origin (content script on instagram.com)
+// because the fetch is same-origin (content script on platform.com)
 ```
 
 ### 2.2 CSRF Token Extraction
 
 ```typescript
-// api/csrf.ts — runs inside the CONTENT SCRIPT on instagram.com
+// api/csrf.ts — runs inside the CONTENT SCRIPT on platform.com
 ```
 
 **How same-origin authentication works:**
-The content script runs on `instagram.com`. When we call `fetch()` from the
+The content script runs on `platform.com`. When we call `fetch()` from the
 content script, the browser automatically includes ALL cookies for the domain
 (including the HttpOnly `sessionid`). We never need to read or manage the
 session cookie — the browser handles it.
@@ -80,7 +80,7 @@ export function isLoggedIn(): boolean {
 }
 ```
 
-> **Architecture**: All `fetch()` calls to Instagram endpoints happen in the
+> **Architecture**: All `fetch()` calls to Platform endpoints happen in the
 > **content script** (same-origin). The **service worker** orchestrates
 > WHEN to make requests (via alarms + messages), but never makes the HTTP
 > calls itself. The service worker sends a message like `"HARVEST_START"`,
@@ -93,15 +93,15 @@ export function isLoggedIn(): boolean {
 // src/api/endpoints/user.ts
 
 // Get user info by username
-// GET https://www.instagram.com/api/v1/users/web_profile_info/?username={username}
+// GET https://www.platform.com/api/v1/users/web_profile_info/?username={username}
 export async function getUserByUsername(username: string): Promise<UserProfile>
 
 // Get user info by ID
-// GET https://i.instagram.com/api/v1/users/{userId}/info/
+// GET https://i.platform.com/api/v1/users/{userId}/info/
 export async function getUserById(userId: string): Promise<UserProfile>
 
 // Search users
-// GET https://www.instagram.com/web/search/topsearch/?query={query}
+// GET https://www.platform.com/web/search/topsearch/?query={query}
 export async function searchUsers(query: string): Promise<UserSearchResult[]>
 ```
 
@@ -110,7 +110,7 @@ export async function searchUsers(query: string): Promise<UserSearchResult[]>
 // src/api/endpoints/followers.ts
 
 // Get followers of a user (paginated)
-// GET https://www.instagram.com/api/v1/friendships/{userId}/followers/
+// GET https://www.platform.com/api/v1/friendships/{userId}/followers/
 //   ?count=50&max_id={cursor}
 export async function getFollowers(
   userId: string,
@@ -119,7 +119,7 @@ export async function getFollowers(
 ): Promise<PaginatedResponse<FollowerInfo>>
 
 // Get following of a user (paginated)
-// GET https://www.instagram.com/api/v1/friendships/{userId}/following/
+// GET https://www.platform.com/api/v1/friendships/{userId}/following/
 //   ?count=50&max_id={cursor}
 export async function getFollowing(
   userId: string,
@@ -128,7 +128,7 @@ export async function getFollowing(
 ): Promise<PaginatedResponse<FollowerInfo>>
 
 // Check friendship status
-// GET https://www.instagram.com/api/v1/friendships/show/{userId}/
+// GET https://www.platform.com/api/v1/friendships/show/{userId}/
 export async function getFriendshipStatus(
   userId: string
 ): Promise<FriendshipStatus>
@@ -139,7 +139,7 @@ export async function getFriendshipStatus(
 // src/api/endpoints/media.ts
 
 // Get user feed (recent posts)
-// GET https://www.instagram.com/api/v1/feed/user/{userId}/
+// GET https://www.platform.com/api/v1/feed/user/{userId}/
 //   ?count=12&max_id={cursor}
 export async function getUserFeed(
   userId: string,
@@ -147,21 +147,21 @@ export async function getUserFeed(
 ): Promise<PaginatedResponse<MediaItem>>
 
 // Like a media item
-// POST https://www.instagram.com/api/v1/web/likes/{mediaId}/like/
+// POST https://www.platform.com/api/v1/web/likes/{mediaId}/like/
 export async function likeMedia(mediaId: string): Promise<LikeResponse>
 
 // Unlike a media item
-// POST https://www.instagram.com/api/v1/web/likes/{mediaId}/unlike/
+// POST https://www.platform.com/api/v1/web/likes/{mediaId}/unlike/
 export async function unlikeMedia(mediaId: string): Promise<LikeResponse>
 ```
 
 ### 2.4 Type Definitions
 
 ```typescript
-// src/types/instagram.ts
+// src/types/platform.ts
 
 export interface UserProfile {
-  pk: string;                // Instagram user ID
+  pk: string;                // Platform user ID
   username: string;
   full_name: string;
   biography: string;
@@ -220,39 +220,39 @@ export interface LikeResponse {
 ```typescript
 // src/api/errors.ts
 
-export class InstagramApiError extends Error {
+export class PlatformApiError extends Error {
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly response?: unknown
   ) {
     super(message);
-    this.name = "InstagramApiError";
+    this.name = "PlatformApiError";
   }
 }
 
-export class RateLimitError extends InstagramApiError {
+export class RateLimitError extends PlatformApiError {
   constructor(response?: unknown) {
     super("Rate limit exceeded", 429, response);
     this.name = "RateLimitError";
   }
 }
 
-export class ActionBlockError extends InstagramApiError {
+export class ActionBlockError extends PlatformApiError {
   constructor(response?: unknown) {
-    super("Action blocked by Instagram", 400, response);
+    super("Action blocked by Platform", 400, response);
     this.name = "ActionBlockError";
   }
 }
 
 export class NotAuthenticatedError extends Error {
   constructor() {
-    super("Not authenticated — no valid Instagram session found");
+    super("Not authenticated — no valid Platform session found");
     this.name = "NotAuthenticatedError";
   }
 }
 
-export class CheckpointRequiredError extends InstagramApiError {
+export class CheckpointRequiredError extends PlatformApiError {
   constructor(public readonly checkpointUrl: string, response?: unknown) {
     super("Checkpoint required", 400, response);
     this.name = "CheckpointRequiredError";
@@ -288,7 +288,7 @@ export async function withRetry<T>(
 // api/endpoint-registry.ts
 ```
 
-Instagram rotates internal GraphQL `doc_id` values every 2-4 weeks.
+Platform rotates internal GraphQL `doc_id` values every 2-4 weeks.
 Hardcoding endpoint URLs is fragile. The endpoint registry provides:
 
 1. **Centralized URL management** — all endpoint URLs in one module
@@ -328,7 +328,7 @@ export async function updateEndpoint(key: string, url: string): Promise<void>;
 export async function healthCheck(): Promise<Record<string, boolean>>;
 ```
 
-> **Why this matters**: Instagram has deprecated the Basic Display API (Dec 2024),
+> **Why this matters**: Platform has deprecated the Basic Display API (Dec 2024),
 > deprecated multiple insights metrics (Jan 2025), and continues to rotate
 > private GraphQL `doc_id` values regularly. Without an endpoint registry,
 > the extension silently breaks when endpoints change.
@@ -362,7 +362,7 @@ api/
 │   ├── user.ts            # User profile endpoints
 │   ├── followers.ts       # Follower/following endpoints
 │   └── media.ts           # Feed and like endpoints
-├── types.ts               # Re-export from types/instagram.ts
+├── types.ts               # Re-export from types/platform.ts
 └── index.ts               # Barrel export
 ```
 
@@ -383,7 +383,7 @@ api/
 - Test pagination cursor handling
 
 ### Integration Tests
-- Test against mock Instagram responses (fixtures)
+- Test against mock Platform responses (fixtures)
 - Verify full request/response cycle for each endpoint
 - Test error propagation from API to caller
 

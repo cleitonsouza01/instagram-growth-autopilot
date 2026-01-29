@@ -220,7 +220,7 @@ export async function getEngineStatus(): Promise<EngineStatus>
 
 ```
 Popup                Service Worker              Content Script
-  │                       │                        (on instagram.com)
+  │                       │                        (on platform.com)
   │                       │                           │
   │── START_ENGINE ──────>│                           │
   │                       │── HARVEST_START ─────────>│
@@ -243,11 +243,11 @@ Popup                Service Worker              Content Script
   │<── COOLDOWN_ALERT ────│                           │
 ```
 
-> **Key**: The content script makes ALL HTTP requests to Instagram.
-> It runs on `instagram.com` so `fetch()` calls are same-origin — the browser
+> **Key**: The content script makes ALL HTTP requests to Platform.
+> It runs on `platform.com` so `fetch()` calls are same-origin — the browser
 > automatically includes all cookies (including HttpOnly `sessionid`).
 > The service worker only orchestrates timing and state — it never calls
-> Instagram endpoints directly.
+> Platform endpoints directly.
 
 ---
 
@@ -288,7 +288,7 @@ src/background/
 ## Acceptance Criteria
 
 - [ ] Harvester fetches competitor followers with pagination
-- [ ] Prospects are deduplicated by Instagram user ID
+- [ ] Prospects are deduplicated by Platform user ID
 - [ ] Filters correctly exclude bots, private accounts, already-engaged
 - [ ] Queue returns prospects in FIFO order
 - [ ] Like executor likes correct number of posts per prospect

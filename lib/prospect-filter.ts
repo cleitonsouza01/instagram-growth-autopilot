@@ -47,7 +47,7 @@ export function filterProspect(
 
     const recentEngagement = engagementHistory.find(
       (log) =>
-        log.targetUserId === prospect.igUserId &&
+        log.targetUserId === prospect.platformUserId &&
         log.action === "like" &&
         log.success &&
         now - log.timestamp < cooldownMs,

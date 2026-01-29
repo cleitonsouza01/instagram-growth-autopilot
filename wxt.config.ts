@@ -4,10 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
-    name: "Instagram Growth Autopilot",
+    name: "Platform Growth Autopilot",
     description:
-      "Grow your Instagram audience organically with smart, safe engagement automation.",
-    permissions: ["storage", "alarms"],
+      "Grow your audience organically with smart, safe engagement automation.",
+    permissions: ["storage", "alarms", "tabs", "declarativeNetRequest"],
     host_permissions: [
       "https://www.instagram.com/*",
       "https://i.instagram.com/*",
@@ -19,5 +19,12 @@ export default defineConfig({
   },
   vite: () => ({
     plugins: [tailwindcss()],
+    build: {
+      // Ensure ASCII-only output to avoid Chrome "not UTF-8 encoded" errors
+      target: "esnext",
+    },
+    esbuild: {
+      charset: "ascii",
+    },
   }),
 });

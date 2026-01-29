@@ -3,7 +3,7 @@ import {
   ActionBlockError,
   NotAuthenticatedError,
   CheckpointRequiredError,
-  InstagramApiError,
+  PlatformApiError,
 } from "./errors";
 
 export interface RetryConfig {
@@ -20,7 +20,7 @@ const DEFAULT_RETRY_CONFIG: RetryConfig = {
   retryableStatuses: [429, 500, 502, 503, 504],
 };
 
-/** Non-retryable errors — rethrow immediately */
+/** Non-retryable errors - rethrow immediately */
 function isNonRetryable(error: unknown): boolean {
   return (
     error instanceof ActionBlockError ||
@@ -56,7 +56,7 @@ export async function withRetry<T>(
       }
 
       // Check if status is retryable
-      if (error instanceof InstagramApiError) {
+      if (error instanceof PlatformApiError) {
         if (!retryableStatuses.includes(error.statusCode)) {
           throw error;
         }

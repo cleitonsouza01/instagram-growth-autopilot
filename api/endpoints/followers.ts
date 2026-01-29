@@ -1,6 +1,7 @@
-import { igFetch } from "../client";
+import { platformFetch } from "../client";
 import { getEndpoint, resolveUrl } from "../endpoint-registry";
-import type { FollowerInfo, PaginatedResponse, FriendshipStatus } from "../../types/instagram";
+import type { FollowerInfo, PaginatedResponse, FriendshipStatus } from "../../types/platform";
+import { logger } from "../../utils/logger";
 
 interface FollowersApiResponse {
   users: FollowerInfo[];
@@ -26,14 +27,24 @@ export async function getFollowers(
     params.max_id = cursor;
   }
 
-  const response = await igFetch<FollowersApiResponse>(
+  const response = await platformFetch<FollowersApiResponse>(
     url,
     endpoint.method,
     { params, signal },
   );
 
+  logger.debug("followers-api", `Response for user ${userId}`, {
+    usersCount: response.users?.length ?? 0,
+    hasNextMaxId: !!response.next_max_id,
+    status: response.status,
+    responseKeys: response ? Object.keys(response) : [],
+  });
+
+  // Instagram sometimes returns empty or undefined users array
+  const users = response.users ?? [];
+
   return {
-    items: response.users,
+    items: users,
     next_max_id: response.next_max_id ?? null,
     has_more: !!response.next_max_id,
   };
@@ -53,7 +64,7 @@ export async function getFollowing(
     params.max_id = cursor;
   }
 
-  const response = await igFetch<FollowersApiResponse>(
+  const response = await platformFetch<FollowersApiResponse>(
     url,
     endpoint.method,
     { params, signal },
@@ -73,7 +84,7 @@ export async function getFriendshipStatus(
   const endpoint = await getEndpoint("friendshipStatus");
   const url = resolveUrl(endpoint.url, { userId });
 
-  const response = await igFetch<FriendshipApiResponse>(
+  const response = await platformFetch<FriendshipApiResponse>(
     url,
     endpoint.method,
     { signal },
@@ -87,4 +98,56 @@ export async function getFriendshipStatus(
     incoming_request: response.incoming_request,
     outgoing_request: response.outgoing_request,
   };
+}
+
+interface FollowActionResponse {
+  friendship_status: FriendshipStatus;
+  status: string;
+}
+
+/**
+ * Follow a user by their user ID.
+ */
+export async function followUser(
+  userId: string,
+  signal?: AbortSignal,
+): Promise<FriendshipStatus> {
+  const endpoint = await getEndpoint("followUser");
+  const url = resolveUrl(endpoint.url, { userId });
+
+  logger.info("followers-api", `Following user ${userId}`);
+
+  const response = await platformFetch<FollowActionResponse>(
+    url,
+    endpoint.method,
+    { signal },
+  );
+
+  logger.debug("followers-api", `Follow response for ${userId}`, {
+    status: response.status,
+    following: response.friendship_status?.following,
+  });
+
+  return response.friendship_status;
+}
+
+/**
+ * Unfollow a user by their user ID.
+ */
+export async function unfollowUser(
+  userId: string,
+  signal?: AbortSignal,
+): Promise<FriendshipStatus> {
+  const endpoint = await getEndpoint("unfollowUser");
+  const url = resolveUrl(endpoint.url, { userId });
+
+  logger.info("followers-api", `Unfollowing user ${userId}`);
+
+  const response = await platformFetch<FollowActionResponse>(
+    url,
+    endpoint.method,
+    { signal },
+  );
+
+  return response.friendship_status;
 }

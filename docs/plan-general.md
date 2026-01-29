@@ -1,7 +1,7 @@
-# Plan General — Instagram Growth Autopilot
+# Plan General — Platform Growth Autopilot
 
 > Master plan and roadmap for building a client-side Chrome extension that
-> automates Instagram growth through like-based engagement.
+> automates Platform growth through like-based engagement.
 
 ## Table of Contents
 
@@ -16,7 +16,7 @@
 
 ## Vision
 
-Build a Chrome extension that helps Instagram creators grow their audience
+Build a Chrome extension that helps Platform creators grow their audience
 organically by automating like-based engagement on competitor followers.
 The extension runs entirely client-side — no backend servers, no credential
 storage, no data exfiltration.
@@ -49,7 +49,7 @@ storage, no data exfiltration.
 │                      │  chrome.runtime messages           │
 │                      │                                    │
 │  ┌───────────────────┴──────────────────────────────┐    │
-│  │         Content Script (instagram.com)            │    │
+│  │         Content Script (platform.com)            │    │
 │  │         ══════════════════════════════             │    │
 │  │  SAME-ORIGIN — fetch() includes all cookies       │    │
 │  │  automatically (including HttpOnly sessionid)     │    │
@@ -84,7 +84,7 @@ storage, no data exfiltration.
 | Phase | Name | Priority | Dependencies |
 |-------|------|----------|-------------|
 | 1 | [Extension Scaffold & Build Pipeline](./plan-phase-01-scaffold.md) | P0 | None |
-| 2 | [Instagram API Integration](./plan-phase-02-api-integration.md) | P0 | Phase 1 |
+| 2 | [Platform API Integration](./plan-phase-02-api-integration.md) | P0 | Phase 1 |
 | 3 | [Growth Engine — Like-Based Engagement](./plan-phase-03-growth-engine.md) | P0 | Phase 2 |
 | 4 | [Safety Controls & Rate Limiting](./plan-phase-04-safety-controls.md) | P0 | Phase 3 |
 | 5 | [Bot Detection & Prospect Filtering](./plan-phase-05-bot-detection.md) | P1 | Phase 3 |
@@ -120,10 +120,10 @@ storage, no data exfiltration.
 
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
-| Instagram API changes | Extension breaks silently | Version detection, graceful fallback, rapid update process |
+| Platform API changes | Extension breaks silently | Version detection, graceful fallback, rapid update process |
 | User account bans | Loss of user trust | Conservative defaults, clear warnings, safety-first design |
 | Chrome Web Store rejection | Cannot distribute | Clear user consent, transparent automation disclosure |
-| Instagram `doc_id` rotation | Endpoints break every 2-4 weeks | Endpoint registry pattern, health checks, easy update path |
+| Platform `doc_id` rotation | Endpoints break every 2-4 weeks | Endpoint registry pattern, health checks, easy update path |
 
 ### Medium Risk
 
@@ -153,7 +153,7 @@ Each phase has a dedicated plan document with:
 
 Navigate to individual phase plans:
 1. [Phase 1: Extension Scaffold](./plan-phase-01-scaffold.md)
-2. [Phase 2: Instagram API Integration](./plan-phase-02-api-integration.md)
+2. [Phase 2: Platform API Integration](./plan-phase-02-api-integration.md)
 3. [Phase 3: Growth Engine](./plan-phase-03-growth-engine.md)
 4. [Phase 4: Safety Controls](./plan-phase-04-safety-controls.md)
 5. [Phase 5: Bot Detection](./plan-phase-05-bot-detection.md)

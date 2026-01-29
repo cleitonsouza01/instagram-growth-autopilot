@@ -1,11 +1,11 @@
-# CLAUDE.md — Instagram Growth Autopilot
+# CLAUDE.md — Platform Growth Autopilot
 
 > This file defines the canonical patterns, conventions, and constraints
 > that every agent (human or AI) must follow when working in this repository.
 
 ## Project Identity
 
-- **Name**: Instagram Growth Autopilot
+- **Name**: Platform Growth Autopilot
 - **Type**: Chrome Extension (Manifest V3)
 - **Stack**: TypeScript · React 18 · Vite (via WXT framework) · Tailwind CSS v4 · Dexie.js
 - **Target**: Chromium-based browsers (Chrome, Edge, Brave, Arc)
@@ -17,8 +17,8 @@
 
 ### 1. Client-Side Only
 All automation runs in the user's browser. There is **no backend server**.
-The extension uses the user's existing Instagram session cookies — it never
-stores, transmits, or requests Instagram credentials.
+The extension uses the user's existing Platform session cookies — it never
+stores, transmits, or requests Platform credentials.
 
 ### 2. Manifest V3 First
 We use Chrome Manifest V3 exclusively. No MV2 fallbacks. Key implications:
@@ -31,11 +31,11 @@ We use Chrome Manifest V3 exclusively. No MV2 fallbacks. Key implications:
 ```
 src/
 ├── background/     # Service worker — orchestration, alarms, message routing
-├── content/        # Content scripts — injected into instagram.com
+├── content/        # Content scripts — injected into platform.com
 ├── popup/          # Popup UI — React app shown on extension icon click
 ├── options/        # Options/settings page — React app
 ├── lib/            # Shared business logic (pure functions, no DOM/chrome deps)
-├── api/            # Instagram API wrapper layer
+├── api/            # Platform API wrapper layer
 ├── storage/        # chrome.storage + Dexie.js abstraction
 ├── types/          # Shared TypeScript types and interfaces
 └── utils/          # Generic utilities (time, math, string helpers)
@@ -112,15 +112,15 @@ Every automated action respects:
 
 ---
 
-## Instagram API Interaction Rules
+## Platform API Interaction Rules
 
 ### Same-Origin Content Script Architecture
-All Instagram interactions happen from the **content script** injected into
-`instagram.com`. Because the content script runs in the page's origin:
-- `fetch()` calls to Instagram endpoints are **same-origin** — the browser
+All Platform interactions happen from the **content script** injected into
+`platform.com`. Because the content script runs in the page's origin:
+- `fetch()` calls to Platform endpoints are **same-origin** — the browser
   automatically includes all cookies (including HttpOnly `sessionid`).
 - No `chrome.cookies` API needed. No API keys. No OAuth. No official Graph API.
-- We simply make the **same HTTP requests** that Instagram's own JavaScript makes.
+- We simply make the **same HTTP requests** that Platform's own JavaScript makes.
 - This is how Inssist and similar extensions work — they piggyback on the
   user's existing authenticated session.
 
@@ -130,13 +130,13 @@ All Instagram interactions happen from the **content script** injected into
 - Extract once per session, refresh if a request fails with 403.
 
 ### Rate Limiting
-- Budget: **200 actions/hour maximum** (Instagram's enforced ceiling).
+- Budget: **200 actions/hour maximum** (Platform's enforced ceiling).
 - Our default: far below this — 100–500 actions/day spread across active hours.
 - Monitor response status codes for throttle signals.
 - On 429: stop all actions, enter cooldown (minimum 1 hour).
 
 ### Endpoint Resilience
-- Instagram rotates internal `doc_id` GraphQL endpoints every 2-4 weeks.
+- Platform rotates internal `doc_id` GraphQL endpoints every 2-4 weeks.
 - Abstract all endpoint URLs into a single **endpoint registry** module.
 - Include a version/health check on startup to detect endpoint breakage.
 - Log all 404/400 responses as potential endpoint rotation signals.
@@ -145,7 +145,7 @@ All Instagram interactions happen from the **content script** injected into
 
 ### Request Patterns
 - All requests made from the content script via `fetch()` (same-origin).
-- Always include `X-CSRFToken`, `X-Instagram-AJAX`, `X-Requested-With` headers.
+- Always include `X-CSRFToken`, `X-Platform-AJAX`, `X-Requested-With` headers.
 - `User-Agent` and cookies are handled automatically by the browser.
 - Add random delay (2–5 seconds) between sequential requests.
 - Paginate with cursor — never fetch more than one page at a time without delay.
@@ -191,10 +191,10 @@ All Instagram interactions happen from the **content script** injected into
 ```json
 {
   "permissions": ["storage", "alarms"],
-  "host_permissions": ["https://www.instagram.com/*", "https://i.instagram.com/*"]
+  "host_permissions": ["https://www.platform.com/*", "https://i.platform.com/*"]
 }
 ```
-- `host_permissions` grant content script injection on Instagram pages.
+- `host_permissions` grant content script injection on Platform pages.
 - Content script `fetch()` calls are same-origin — no extra permissions needed.
 - Request only what's needed. No `<all_urls>`, no `tabs`, no `cookies`, no `webRequest`.
 - Note: `activeTab` is NOT used — content scripts declared in manifest
@@ -274,7 +274,7 @@ Service Worker schedules harvest alarm (chrome.alarms)
        ↓
 Service Worker sends HARVEST message → Content Script
        ↓
-Content Script makes same-origin fetch() to IG endpoints
+Content Script makes same-origin fetch() to platform endpoints
   (cookies auto-included, csrftoken from document.cookie)
        ↓
 Content Script returns follower data → Service Worker
@@ -323,13 +323,13 @@ Before each action (checked by Service Worker):
 
 ## Non-Negotiables
 
-1. **Never store Instagram credentials** — use session cookies only.
+1. **Never store Platform credentials** — use session cookies only.
 2. **Never exceed safety limits** — the user's account safety is paramount.
 3. **Never use `any` type** — TypeScript strict mode is non-negotiable.
 4. **Never ship without tests** — minimum 80% coverage on core modules.
 5. **Never load remote code** — MV3 forbids it, and we enforce it.
 6. **Never use `unsafe-eval` or `unsafe-inline`** — CSP must be strict.
-7. **Never bypass rate limits** — respect Instagram's platform.
+7. **Never bypass rate limits** — respect Platform's platform.
 8. **All actions must be logged** — full audit trail in IndexedDB.
 9. **All user data stays local** — no telemetry, no analytics servers.
-10. **Graceful degradation** — if Instagram changes APIs, fail safely with clear user messaging.
+10. **Graceful degradation** — if Platform changes APIs, fail safely with clear user messaging.

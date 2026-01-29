@@ -5,10 +5,23 @@ import { logger } from "../utils/logger";
  * Get the next prospect in FIFO order (by fetchedAt) with status "queued".
  */
 export async function getNextProspect(): Promise<Prospect | null> {
+  // Debug: Log total counts by status
+  const stats = await getQueueStats();
+  const total = await db.prospects.count();
+  logger.info("engagement-queue", "getNextProspect - DB stats", {
+    total,
+    queued: stats.queued,
+    engaged: stats.engaged,
+    failed: stats.failed,
+    skipped: stats.skipped,
+  });
+
   const prospects = await db.prospects
     .where("status")
     .equals("queued")
     .sortBy("fetchedAt");
+
+  logger.info("engagement-queue", `Found ${prospects.length} queued prospects`);
 
   return prospects[0] ?? null;
 }

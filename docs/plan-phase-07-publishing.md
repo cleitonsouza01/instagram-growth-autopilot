@@ -1,6 +1,6 @@
 # Phase 7: Content Publishing from Desktop
 
-> Enable users to create and upload Instagram content (photos, stories, reels)
+> Enable users to create and upload Platform content (photos, stories, reels)
 > directly from their desktop browser.
 
 ## Objectives
@@ -21,8 +21,8 @@
 // src/api/endpoints/upload.ts
 ```
 
-**Upload flow (Instagram's internal process):**
-1. Request upload URL from Instagram
+**Upload flow (Platform's internal process):**
+1. Request upload URL from Platform
 2. Upload media binary to the upload URL
 3. Configure the post (caption, location, tags)
 4. Publish the configured media
@@ -31,22 +31,22 @@
 
 ```typescript
 // Step 1: Get upload URL
-// POST https://www.instagram.com/rupload_igphoto/{uploadId}
-// Headers: X-Instagram-Rupload-Params (JSON with upload metadata)
+// POST https://www.platform.com/rupload_igphoto/{uploadId}
+// Headers: X-Platform-Rupload-Params (JSON with upload metadata)
 
 // Step 2: Upload binary
 // POST to the upload URL with binary body
 // Content-Type: image/jpeg or video/mp4
 
 // Step 3: Configure & publish photo
-// POST https://www.instagram.com/api/v1/media/configure/
+// POST https://www.platform.com/api/v1/media/configure/
 // Body: caption, location, usertags, etc.
 
 // Step 3 alt: Configure & publish story
-// POST https://www.instagram.com/api/v1/media/configure_to_story/
+// POST https://www.platform.com/api/v1/media/configure_to_story/
 
 // Step 3 alt: Configure & publish reel
-// POST https://www.instagram.com/api/v1/media/configure_to_clips/
+// POST https://www.platform.com/api/v1/media/configure_to_clips/
 ```
 
 ```typescript
@@ -85,7 +85,7 @@ export async function uploadCarousel(images: Blob[], caption: string): Promise<M
 ```
 
 **Client-side processing using Canvas API:**
-- Resize images to Instagram's requirements (1080x1080, 1080x1350, 1080x608)
+- Resize images to Platform's requirements (1080x1080, 1080x1350, 1080x608)
 - Compress JPEG to target file size
 - Generate thumbnails for preview
 - Crop tool with aspect ratio presets (1:1, 4:5, 16:9)
@@ -121,7 +121,7 @@ export async function generateThumbnail(
 ```typescript
 // src/api/endpoints/location.ts
 
-// GET https://www.instagram.com/api/v1/location_search/
+// GET https://www.platform.com/api/v1/location_search/
 //   ?search_query={query}&latitude=0&longitude=0
 export async function searchLocations(query: string): Promise<LocationResult[]>;
 
@@ -139,10 +139,10 @@ export interface LocationResult {
 ```typescript
 // src/api/endpoints/hashtags.ts
 
-// GET https://www.instagram.com/api/v1/tags/search/?q={query}
+// GET https://www.platform.com/api/v1/tags/search/?q={query}
 export async function searchHashtags(query: string): Promise<HashtagResult[]>;
 
-// GET https://www.instagram.com/api/v1/tags/{tag}/info/
+// GET https://www.platform.com/api/v1/tags/{tag}/info/
 export async function getHashtagInfo(tag: string): Promise<HashtagInfo>;
 
 export interface HashtagResult {

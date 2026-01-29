@@ -1,10 +1,38 @@
 import { getUserFeed } from "../api/endpoints/media";
 import { likeMedia } from "../api/endpoints/media";
-import { db } from "../storage/database";
 import type { Prospect } from "../storage/database";
 import { randomDelay } from "../utils/delay";
 import { logger } from "../utils/logger";
 import { ENGAGEMENT_DEFAULTS } from "./constants";
+import { ContentNotFoundError } from "../api/errors";
+import { MessageType } from "../types/messages";
+
+/**
+ * Log an action by sending it to the background script.
+ * The background script writes to IndexedDB in the extension's origin,
+ * which is shared with the options page.
+ */
+async function logAction(action: {
+  action: "like" | "unlike" | "harvest" | "filter";
+  targetUserId: string;
+  targetUsername: string;
+  mediaId?: string;
+  success: boolean;
+  error?: string;
+  timestamp: number;
+}): Promise<void> {
+  try {
+    await chrome.runtime.sendMessage({
+      type: MessageType.LOG_ACTION,
+      payload: action,
+    });
+  } catch (err) {
+    // Don't fail the like operation if logging fails
+    logger.warn("like-executor", "Failed to log action to background", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 export interface LikeExecutionResult {
   prospectId: number;
@@ -38,19 +66,30 @@ export async function engageProspect(
 
   logger.info(
     "like-executor",
-    `Engaging @${prospect.username} (target: ${likesPerProspect} likes)`,
+    `[v2] Engaging @${prospect.username} (target: ${likesPerProspect} likes)`,
   );
 
   try {
     // Fetch recent feed
     const feed = await getUserFeed(
-      prospect.igUserId,
+      prospect.platformUserId,
       ENGAGEMENT_DEFAULTS.recentPostsToFetch,
       signal,
     );
 
     // Filter to unliked posts
     const unlikedPosts = feed.items.filter((item) => !item.has_liked);
+
+    // Debug: log the first post's id vs pk to understand format
+    if (feed.items.length > 0) {
+      const sample = feed.items[0];
+      logger.debug("like-executor", "Media ID format sample", {
+        id: sample.id,
+        pk: sample.pk,
+        idLength: sample.id?.length,
+        pkLength: sample.pk?.length,
+      });
+    }
 
     if (unlikedPosts.length === 0) {
       logger.info(
@@ -60,33 +99,43 @@ export async function engageProspect(
       return result;
     }
 
-    // Select posts to like (up to likesPerProspect)
-    const postsToLike = unlikedPosts.slice(0, likesPerProspect);
+    // Try posts until we get likesPerProspect successful likes
+    // (some posts may be deleted, so we may need to try more than likesPerProspect)
+    logger.debug("like-executor", `Starting like loop for @${prospect.username}`, {
+      unlikedPostsCount: unlikedPosts.length,
+      targetLikes: likesPerProspect,
+    });
 
-    for (const post of postsToLike) {
+    for (const post of unlikedPosts) {
       if (signal.aborted) break;
+      // Stop once we've liked enough posts
+      if (result.postsLiked >= likesPerProspect) break;
 
       result.postsAttempted++;
+      // Use post.pk (numeric ID), NOT post.id (which may include owner suffix)
+      const mediaId = post.pk || post.id;
+      logger.info("like-executor", `[${result.postsAttempted}] BEFORE likeMedia for post pk=${mediaId.slice(-12)}`);
 
       try {
-        const response = await likeMedia(post.id, signal);
+        const response = await likeMedia(mediaId, signal);
+        logger.info("like-executor", `[${result.postsAttempted}] AFTER likeMedia - status: ${response?.status}`);
 
         if (response.status === "ok") {
           result.postsLiked++;
 
-          // Log the action
-          await db.actionLogs.add({
+          // Log the action (to background script for IndexedDB persistence)
+          await logAction({
             action: "like",
-            targetUserId: prospect.igUserId,
+            targetUserId: prospect.platformUserId,
             targetUsername: prospect.username,
-            mediaId: post.id,
+            mediaId: mediaId,
             success: true,
             timestamp: Date.now(),
           });
 
           logger.debug(
             "like-executor",
-            `Liked post ${post.id} from @${prospect.username}`,
+            `Liked post ${mediaId} from @${prospect.username}`,
           );
         } else {
           const errorMsg = response.spam
@@ -94,11 +143,11 @@ export async function engageProspect(
             : "like_failed";
           result.errors.push(errorMsg);
 
-          await db.actionLogs.add({
+          await logAction({
             action: "like",
-            targetUserId: prospect.igUserId,
+            targetUserId: prospect.platformUserId,
             targetUsername: prospect.username,
-            mediaId: post.id,
+            mediaId: mediaId,
             success: false,
             error: errorMsg,
             timestamp: Date.now(),
@@ -107,13 +156,30 @@ export async function engageProspect(
       } catch (err) {
         const errorMsg =
           err instanceof Error ? err.message : String(err);
+        const errorName = err instanceof Error ? err.constructor.name : "unknown";
+
+        logger.debug("like-executor", `likeMedia error for post ${mediaId}`, {
+          errorName,
+          errorMsg: errorMsg.slice(0, 200),
+        });
+
+        // Handle deleted content gracefully - just skip this post
+        if (err instanceof ContentNotFoundError) {
+          logger.info(
+            "like-executor",
+            `Skipping deleted post ${mediaId} from @${prospect.username}`,
+          );
+          // Don't count as an error, don't log to actionLogs, just continue
+          continue;
+        }
+
         result.errors.push(errorMsg);
 
-        await db.actionLogs.add({
+        await logAction({
           action: "like",
-          targetUserId: prospect.igUserId,
+          targetUserId: prospect.platformUserId,
           targetUsername: prospect.username,
-          mediaId: post.id,
+          mediaId: mediaId,
           success: false,
           error: errorMsg,
           timestamp: Date.now(),
@@ -128,8 +194,8 @@ export async function engageProspect(
         }
       }
 
-      // Human-like delay between likes
-      if (!signal.aborted && result.postsAttempted < postsToLike.length) {
+      // Human-like delay between likes (only if we successfully liked and need more)
+      if (!signal.aborted && result.postsLiked > 0 && result.postsLiked < likesPerProspect) {
         await randomDelay(
           ENGAGEMENT_DEFAULTS.minDelayBetweenLikesMs,
           ENGAGEMENT_DEFAULTS.maxDelayBetweenLikesMs,

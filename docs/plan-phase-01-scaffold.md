@@ -20,7 +20,7 @@
 
 ```bash
 # Scaffold with WXT (replaces manual Vite + CRXJS setup)
-pnpm dlx wxt@latest init instagram-growth-autopilot --template react
+pnpm dlx wxt@latest init platform-growth-autopilot --template react
 
 # Additional dependencies
 pnpm add react react-dom dexie
@@ -44,7 +44,7 @@ WXT uses a **file-based entrypoint system** — files in `entrypoints/` automati
 generate the manifest. No manual `manifest.json` editing needed.
 
 ```
-instagram-growth-autopilot/
+platform-growth-autopilot/
 ├── docs/                          # Project documentation
 ├── assets/
 │   └── icons/                     # Extension icons (16, 32, 48, 128)
@@ -71,7 +71,7 @@ instagram-growth-autopilot/
 │   ├── orchestrator.ts            # Engine state machine
 │   ├── alarm-manager.ts           # chrome.alarms scheduling
 │   └── message-handler.ts         # Message routing
-├── api/                           # Instagram API wrapper layer
+├── api/                           # Platform API wrapper layer
 │   ├── client.ts
 │   ├── cookies.ts
 │   ├── errors.ts
@@ -89,7 +89,7 @@ instagram-growth-autopilot/
 ├── types/
 │   ├── messages.ts
 │   ├── settings.ts
-│   ├── instagram.ts
+│   ├── platform.ts
 │   └── index.ts
 ├── utils/
 │   ├── delay.ts
@@ -124,12 +124,12 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
-    name: "Instagram Growth Autopilot",
-    description: "Grow your Instagram audience organically with smart, safe engagement automation.",
+    name: "Platform Growth Autopilot",
+    description: "Grow your Platform audience organically with smart, safe engagement automation.",
     permissions: ["storage", "alarms"],
     host_permissions: [
-      "https://www.instagram.com/*",
-      "https://i.instagram.com/*",
+      "https://www.platform.com/*",
+      "https://i.platform.com/*",
     ],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'",
@@ -155,7 +155,7 @@ export default defineBackground(() => {
 
 // entrypoints/content.ts
 export default defineContentScript({
-  matches: ["https://www.instagram.com/*"],
+  matches: ["https://www.platform.com/*"],
   runAt: "document_idle",
   main() {
     // Content script logic
@@ -163,7 +163,7 @@ export default defineContentScript({
 });
 ```
 
-> **Same-origin architecture** — The content script runs on `instagram.com`,
+> **Same-origin architecture** — The content script runs on `platform.com`,
 > so all `fetch()` calls are same-origin. The browser automatically includes
 > ALL cookies (including HttpOnly `sessionid`) with these requests. We only
 > need to manually extract the `csrftoken` from `document.cookie` for the
@@ -311,7 +311,7 @@ export interface ExtensionMessage<T = unknown> {
 // src/types/settings.ts
 export interface UserSettings {
   // Competitors
-  competitors: string[];          // Instagram usernames to target
+  competitors: string[];          // Platform usernames to target
 
   // Engagement limits
   dailyLikeLimit: number;         // Max likes per day (default: 100)
@@ -386,7 +386,7 @@ export class AppDatabase extends Dexie {
   followerSnapshots!: EntityTable<FollowerSnapshot, "id">;
 
   constructor() {
-    super("InstagramGrowthAutopilot");
+    super("PlatformGrowthAutopilot");
 
     this.version(1).stores({
       prospects: "++id, igUserId, username, source, status, fetchedAt",
@@ -405,7 +405,7 @@ export const db = new AppDatabase();
 // src/utils/logger.ts
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-const LOG_PREFIX = "[IG-Autopilot]";
+const LOG_PREFIX = "[GA-Autopilot]";
 
 function log(level: LogLevel, context: string, message: string, data?: unknown): void {
   const timestamp = new Date().toISOString();
@@ -449,7 +449,7 @@ export const logger = {
 - Load extension as unpacked in Chromium
 - Verify popup renders correctly
 - Verify options page renders correctly
-- Verify content script injects on instagram.com
+- Verify content script injects on platform.com
 
 ---
 
@@ -459,7 +459,7 @@ export const logger = {
 - [ ] `pnpm build` produces a valid `dist/` directory loadable as unpacked extension
 - [ ] Popup shows a placeholder dashboard UI
 - [ ] Options page shows a settings form
-- [ ] Content script logs injection on instagram.com
+- [ ] Content script logs injection on platform.com
 - [ ] Service worker registers and responds to status messages
 - [ ] All unit tests pass with `pnpm test`
 - [ ] TypeScript compiles with zero errors in strict mode

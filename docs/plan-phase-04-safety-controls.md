@@ -1,11 +1,11 @@
 # Phase 4: Safety Controls & Rate Limiting
 
-> Protect users' Instagram accounts from bans, action blocks,
-> and detection by Instagram's anti-automation systems.
+> Protect users' Platform accounts from bans, action blocks,
+> and detection by Platform's anti-automation systems.
 
 ## Objectives
 
-- Implement adaptive rate limiting that respects Instagram's thresholds
+- Implement adaptive rate limiting that respects Platform's thresholds
 - Build human-like timing patterns with statistical variance
 - Create action block detection and automatic cooldown
 - Add progressive scaling for new vs. mature accounts

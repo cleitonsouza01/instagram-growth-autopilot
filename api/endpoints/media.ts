@@ -1,6 +1,6 @@
-import { igFetch } from "../client";
+import { platformFetch } from "../client";
 import { getEndpoint, resolveUrl } from "../endpoint-registry";
-import type { MediaItem, PaginatedResponse, LikeResponse } from "../../types/instagram";
+import type { MediaItem, PaginatedResponse, LikeResponse } from "../../types/platform";
 
 interface FeedApiResponse {
   items: MediaItem[];
@@ -17,7 +17,7 @@ export async function getUserFeed(
   const endpoint = await getEndpoint("userFeed");
   const url = resolveUrl(endpoint.url, { userId });
 
-  const response = await igFetch<FeedApiResponse>(url, endpoint.method, {
+  const response = await platformFetch<FeedApiResponse>(url, endpoint.method, {
     params: { count: String(count) },
     signal,
   });
@@ -36,7 +36,12 @@ export async function likeMedia(
   const endpoint = await getEndpoint("likeMedia");
   const url = resolveUrl(endpoint.url, { mediaId });
 
-  return igFetch<LikeResponse>(url, endpoint.method, { signal });
+  // Instagram's like API - POST with empty body
+  const response = await platformFetch<LikeResponse>(url, endpoint.method, {
+    signal,
+  });
+
+  return response;
 }
 
 export async function unlikeMedia(
@@ -46,5 +51,5 @@ export async function unlikeMedia(
   const endpoint = await getEndpoint("unlikeMedia");
   const url = resolveUrl(endpoint.url, { mediaId });
 
-  return igFetch<LikeResponse>(url, endpoint.method, { signal });
+  return platformFetch<LikeResponse>(url, endpoint.method, { signal });
 }

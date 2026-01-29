@@ -3,16 +3,18 @@ import {
   ActionBlockError,
   NotAuthenticatedError,
   CheckpointRequiredError,
-  InstagramApiError,
+  PlatformApiError,
+  ContentNotFoundError,
 } from "./errors";
 
 interface DetectedResponse {
   body: unknown;
   status: number;
+  rawText?: string;
 }
 
 /**
- * Classify an Instagram API response and throw the appropriate error
+ * Classify a platform API response and throw the appropriate error
  * if an error condition is detected.
  */
 export function detectResponseError(response: DetectedResponse): void {
@@ -44,7 +46,7 @@ export function detectResponseError(response: DetectedResponse): void {
 
     // Generic failure
     if (status >= 400 && obj.status === "fail") {
-      throw new InstagramApiError(
+      throw new PlatformApiError(
         (typeof obj.message === "string" ? obj.message : "Request failed"),
         status,
         body,
@@ -54,6 +56,18 @@ export function detectResponseError(response: DetectedResponse): void {
 
   // Non-JSON error responses
   if (status >= 400) {
-    throw new InstagramApiError(`HTTP ${status}`, status, body);
+    // Check for deleted/unavailable content patterns in raw text
+    const rawText = response.rawText ?? "";
+    if (
+      rawText.includes("photo has been deleted") ||
+      rawText.includes("video has been deleted") ||
+      rawText.includes("media has been deleted") ||
+      rawText.includes("page isn't available") ||
+      rawText.includes("content isn't available")
+    ) {
+      throw new ContentNotFoundError(rawText.slice(0, 100), body);
+    }
+
+    throw new PlatformApiError(`HTTP ${status}`, status, body);
   }
 }
