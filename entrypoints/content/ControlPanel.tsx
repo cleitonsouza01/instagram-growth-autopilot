@@ -833,40 +833,6 @@ export function ControlPanel() {
                   </div>
                 ) : (
                   <>
-                    {/* Session Summary - Compact header */}
-                    <div style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "16px",
-                      padding: "10px",
-                      marginBottom: "12px",
-                      background: "linear-gradient(135deg, #f0f9ff 0%, #fdf4ff 100%)",
-                      borderRadius: "10px",
-                      border: "1px solid #e0e7ff",
-                    }}>
-                      <div style={{ textAlign: "center" }}>
-                        <span style={{ fontSize: "18px", fontWeight: 700, color: "#ec4899" }}>
-                          {engagements.reduce((sum, e) => sum + e.likes, 0)}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "4px" }}>likes</span>
-                      </div>
-                      <div style={{ width: "1px", height: "20px", background: "#d1d5db" }} />
-                      <div style={{ textAlign: "center" }}>
-                        <span style={{ fontSize: "18px", fontWeight: 700, color: "#3b82f6" }}>
-                          {engagements.filter(e => e.followed).length}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "4px" }}>follows</span>
-                      </div>
-                      <div style={{ width: "1px", height: "20px", background: "#d1d5db" }} />
-                      <div style={{ textAlign: "center" }}>
-                        <span style={{ fontSize: "18px", fontWeight: 700, color: "#22c55e" }}>
-                          {engagements.filter(e => e.status === "completed").length}
-                        </span>
-                        <span style={{ fontSize: "11px", color: "#6b7280", marginLeft: "4px" }}>done</span>
-                      </div>
-                    </div>
-
                     {/* Prospect List - Simple table-like layout */}
                     <div style={{
                       background: "#fff",
